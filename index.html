@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; padding: 12px; font-family: -apple-system, sans-serif; background: transparent; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 360px; margin: 0 auto; }
+    .grid-item { aspect-ratio: 1 / 1; position: relative; overflow: hidden; background: #f0f0f0; border-radius: 4px; }
+    .grid-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .badge { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.65); color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 3px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="grid" id="instagram-grid"></div>
+
+  <script>
+    const NOTION_KEY = "ntn_J4145515330aanKd7ItGSwe3CD2rC4Kaz9z6JYaJIDD5el";
+    const DATABASE_ID = "3c70f7178b4280e38492fd8a09a323df";
+
+    async function fetchIGGrid() {
+      try {
+        const res = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${NOTION_KEY}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
+        const gridContainer = document.getElementById('instagram-grid');
+        gridContainer.innerHTML = '';
+
+        data.results.forEach(page => {
+          const imageUrl = page.properties['Image URL']?.url || 
+                           page.properties['Media']?.files?.[0]?.file?.url || 
+                           page.properties['Media']?.files?.[0]?.external?.url || '';
+          const date = page.properties['Date']?.date?.start || '';
+          
+          if (imageUrl) {
+            const item = document.createElement('div');
+            item.className = 'grid-item';
+            item.innerHTML = `
+              <img src="${imageUrl}" />
+              ${date ? `<span class="badge">${date}</span>` : ''}
+            `;
+            gridContainer.appendChild(item);
+          }
+        });
+      } catch (err) {
+        console.error("Error fetching Notion data:", err);
+      }
+    }
+
+    fetchIGGrid();
+  </script>
+</body>
+</html>
